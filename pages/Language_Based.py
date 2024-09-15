@@ -63,8 +63,8 @@ if language:
     # Function to split languages into wanted and other languages
     def split_languages(languages_column):
         languages_list = languages_column.split(", ")
-        wanted_language = [lang for lang in languages_list if language in lang]
-        other_languages = [lang for lang in languages_list if lang not in wanted_language]
+        wanted_language = [lang for lang in languages_list if lang == language]
+        other_languages = [lang for lang in languages_list if lang != language]
         return ', '.join(wanted_language), ', '.join(other_languages)
 
     # Apply the language splitting
@@ -78,9 +78,9 @@ if language:
         if reviews_filter == "All reviews":
             # Display the name, wanted language, other languages, and reviews ("No reviews" if no reviews are found)
             st.write(f"Games that support the language '{language}':")
-            st.write(matching_games[['name', 'wanted_language', 'other_languages', 'all_reviews']].head(10))  # Display with separate language columns
+            st.table(matching_games[['name', 'wanted_language', 'other_languages', 'all_reviews']].head(10))  # Display with separate language columns
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.write(matching_games[['name', 'wanted_language', 'other_languages', 'all_reviews']].head(10))  # Display full info with language split
+            st.table(matching_games[['name', 'wanted_language', 'other_languages', 'all_reviews']].head(10))  # Display full info with language split
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
