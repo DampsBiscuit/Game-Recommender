@@ -33,12 +33,17 @@ df2['all_reviews'] = df2['all_reviews'].fillna('No reviews')  # Handle missing r
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: re.sub(r'[^\x00-\x7F]+',' ', x))  # Remove special characters
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: x if len(x) <= 50 else x[:50] + '...')  # Truncate long reviews
 
-# Add a column to format the languages with spacing
-def format_languages(languages):
-    # Split languages by commas and join them with a newline
-    return '\n'.join([lang.strip() for lang in languages.split(',')])
-
-df2['formatted_languages'] = df2['languages'].apply(format_languages)
+# Add a column to format the languages with spacing and brackets for the searched language
+def format_languages(languages, searched_language):
+    # Split languages by commas and format with brackets around the searched language
+    formatted = []
+    for lang in languages.split(','):
+        lang = lang.strip()
+        if lang.lower() == searched_language:
+            formatted.append(f"[{lang}]")
+        else:
+            formatted.append(lang)
+    return ', '.join(formatted)
 
 # Streamlit app
 st.title("🎮Game Recommender with Reviews🎮")
@@ -62,16 +67,19 @@ if language:
     if reviews_filter != "All reviews":
         # Look for partial matches for the selected review filter (e.g., "Mostly Positive" anywhere in the text)
         matching_games = matching_games[matching_games['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
+
+    # Add formatted languages with brackets
+    matching_games['formatted_languages'] = matching_games['languages'].apply(lambda langs: format_languages(langs, language))
     
     # Display total number of matches
     total_matches = len(matching_games)
     st.write(f"Total number of games found that support the language '{language}': {total_matches}")
-    
+
     # Display results
     if not matching_games.empty:
         matching_games = matching_games.reset_index(drop=True)  # Reset index to start from 0
         matching_games.index += 1  # Set index to start from 1
-        
+
         if reviews_filter == "All reviews":
             st.write(f"Games that support the language '{language}':")
             st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(10))  # Display full info if showing all reviews
