@@ -5,15 +5,11 @@ import re
 # Set Streamlit to a wide layout
 st.set_page_config(layout="wide")
 
-# Custom CSS to make the table wider and apply some styling
+# Custom CSS to make the table wider
 st.markdown("""
     <style>
     .dataframe {
         width: 100% !important;
-    }
-    .highlighted {
-        background-color: yellow;
-        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -64,24 +60,24 @@ if language:
         # Look for partial matches for the selected review filter (e.g., "Mostly Positive" anywhere in the text)
         matching_games = matching_games[matching_games['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
 
-    # Function to highlight the searched language
-    def highlight_language(languages_column):
-        return languages_column.replace(language, f'<span class="highlighted">{language}</span>', regex=True)
+    # Function to bold the searched language
+    def bold_language(languages_column):
+        return languages_column.replace(language, f'<b>{language}</b>', regex=True)
 
     # Display results
     if not matching_games.empty:
         matching_games = matching_games.reset_index(drop=True)  # Reset index to start from 0
         matching_games.index += 1  # Set index to start from 1
 
-        # Highlight the searched language in the 'languages' column
-        matching_games['languages'] = matching_games['languages'].apply(highlight_language)
+        # Bold the searched language in the 'languages' column
+        matching_games['languages'] = matching_games['languages'].apply(bold_language)
 
         if reviews_filter == "All reviews":
-            # Display the name, languages (highlighted), and reviews ("No reviews" if no reviews are found)
+            # Display the name, languages (bolded), and reviews ("No reviews" if no reviews are found)
             st.write(f"Games that support the language '{language}':")
-            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display with highlighted languages
+            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display with bolded languages
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display full info with highlighted languages
+            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display full info with bolded languages
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
