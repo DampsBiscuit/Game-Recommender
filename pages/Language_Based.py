@@ -33,15 +33,15 @@ df2['all_reviews'] = df2['all_reviews'].fillna('No reviews')  # Handle missing r
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: re.sub(r'[^\x00-\x7F]+',' ', x))  # Remove special characters
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: x if len(x) <= 50 else x[:50] + '...')  # Truncate long reviews
 
+# Ensure all languages in the dataset are lowercase for comparison
+df2['languages'] = df2['languages'].str.lower()
+
 # Streamlit app
-st.title("🎮Game Recommender with Reviews🎮")
+st.title("🎮 Game Recommender with Reviews 🎮")
 st.write("🔎 Find games based on language and user reviews 🔎")
 
 # Asking for user input via Streamlit for language search
 language = st.text_input("Please enter a language to find games with that language:").lower()
-
-# Ensure all languages in the dataset are lowercase for comparison
-df2['languages'] = df2['languages'].str.lower()
 
 # Add a dropdown for filtering by user reviews
 reviews_filter = st.selectbox("Select review category:", ["None", "Mostly Positive", "Very Positive", "Overwhelmingly Positive"])
@@ -49,23 +49,28 @@ reviews_filter = st.selectbox("Select review category:", ["None", "Mostly Positi
 # If the user has entered a language, proceed with the recommendation
 if language:
     # Filter games that contain the specified language
-    matching_games = df2[df2['languages'].str.contains(language, na=False)]
+    exact_matches = df2[df2['languages'].str.contains(language, na=False)]
+    other_matches = df2[~df2['languages'].str.contains(language, na=False)]
 
-    # Check if a review filter was selected and apply it
+    # Check if a review filter was selected and apply it to both exact and other matches
     if reviews_filter != "None":
-        # Look for partial matches for the selected review filter (e.g., "Mostly Positive" anywhere in the text)
-        matching_games = matching_games[matching_games['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
+        exact_matches = exact_matches[exact_matches['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
+        other_matches = other_matches[other_matches['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
     
+    # Combine the two sets of results, prioritizing exact language matches
+    matching_games = pd.concat([exact_matches, other_matches])
+
+    # Reset index for better readability
+    matching_games = matching_games.reset_index(drop=True)
+    matching_games.index += 1  # Set index to start from 1 for display
+
     # Display results
     if not matching_games.empty:
-        matching_games = matching_games.reset_index(drop=True)  # Reset index to start from 0
-        matching_games.index += 1  # Set index to start from 1
-        
         if reviews_filter == "None":
             st.write(f"Games that support the language '{language}':")
-            st.table(matching_games[['name']].head(10))  # Display only the name if no review filter
+            st.table(matching_games[['name']].head(20))  # Display only the name if no review filter
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.table(matching_games[['name', 'languages', 'all_reviews']].head(10))  # Display full info if review filter is applied
+            st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display name, language, and reviews if filter is applied
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
