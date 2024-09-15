@@ -5,11 +5,15 @@ import re
 # Set Streamlit to a wide layout
 st.set_page_config(layout="wide")
 
-# Custom CSS to make the table wider
+# Custom CSS to make the table wider and apply some styling
 st.markdown("""
     <style>
     .dataframe {
         width: 100% !important;
+    }
+    .highlighted {
+        background-color: yellow;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -44,7 +48,7 @@ language = st.text_input("Please enter a language to find games with that langua
 df2['languages'] = df2['languages'].str.lower()
 
 # Add a dropdown for filtering by user reviews
-reviews_filter = st.selectbox("Select review category:", ["None", "Mostly Positive", "Very Positive", "Overwhelmingly Positive"])
+reviews_filter = st.selectbox("Select review category:", ["All reviews", "Mostly Positive", "Very Positive", "Overwhelmingly Positive"])
 
 # If the user has entered a language, proceed with the recommendation
 if language:
@@ -56,21 +60,28 @@ if language:
     st.write(f"Total games found that support the language '{language}': {total_matches}")
 
     # Check if a review filter was selected and apply it
-    if reviews_filter != "None":
+    if reviews_filter != "All reviews":
         # Look for partial matches for the selected review filter (e.g., "Mostly Positive" anywhere in the text)
         matching_games = matching_games[matching_games['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
+
+    # Function to highlight the searched language
+    def highlight_language(languages_column):
+        return languages_column.replace(language, f'<span class="highlighted">{language}</span>', regex=True)
 
     # Display results
     if not matching_games.empty:
         matching_games = matching_games.reset_index(drop=True)  # Reset index to start from 0
         matching_games.index += 1  # Set index to start from 1
 
-        if reviews_filter == "None":
-            # Display the name, languages, and reviews ("No reviews" if no reviews are found)
+        # Highlight the searched language in the 'languages' column
+        matching_games['languages'] = matching_games['languages'].apply(highlight_language)
+
+        if reviews_filter == "All reviews":
+            # Display the name, languages (highlighted), and reviews ("No reviews" if no reviews are found)
             st.write(f"Games that support the language '{language}':")
-            st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display top 10 games
+            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display with highlighted languages
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display full info if review filter is applied
+            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display full info with highlighted languages
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
