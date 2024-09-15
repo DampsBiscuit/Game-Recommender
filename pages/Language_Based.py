@@ -82,9 +82,9 @@ if language:
 
         if reviews_filter == "All reviews":
             st.write(f"Games that support the language '{language}':")
-            st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(10))  # Display full info if showing all reviews
+            st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(20))  # Display full info if showing all reviews
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(10))  # Display full info if review filter is applied
+            st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(20))  # Display full info if review filter is applied
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
