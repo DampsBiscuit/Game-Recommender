@@ -60,24 +60,27 @@ if language:
         # Look for partial matches for the selected review filter (e.g., "Mostly Positive" anywhere in the text)
         matching_games = matching_games[matching_games['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
 
-    # Function to bold the searched language
-    def bold_language(languages_column):
-        return languages_column.replace(language, f'<b>{language}</b>', regex=True)
+    # Function to split languages into wanted and other languages
+    def split_languages(languages_column):
+        languages_list = languages_column.split(", ")
+        wanted_language = [lang for lang in languages_list if language in lang]
+        other_languages = [lang for lang in languages_list if lang not in wanted_language]
+        return ', '.join(wanted_language), ', '.join(other_languages)
+
+    # Apply the language splitting
+    matching_games[['wanted_language', 'other_languages']] = matching_games['languages'].apply(split_languages).apply(pd.Series)
 
     # Display results
     if not matching_games.empty:
         matching_games = matching_games.reset_index(drop=True)  # Reset index to start from 0
         matching_games.index += 1  # Set index to start from 1
 
-        # Bold the searched language in the 'languages' column
-        matching_games['languages'] = matching_games['languages'].apply(bold_language)
-
         if reviews_filter == "All reviews":
-            # Display the name, languages (bolded), and reviews ("No reviews" if no reviews are found)
+            # Display the name, wanted language, other languages, and reviews ("No reviews" if no reviews are found)
             st.write(f"Games that support the language '{language}':")
-            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display with bolded languages
+            st.write(matching_games[['name', 'wanted_language', 'other_languages', 'all_reviews']].head(10))  # Display with separate language columns
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.write(matching_games[['name', 'languages', 'all_reviews']].to_html(escape=False, index=False), unsafe_allow_html=True)  # Display full info with bolded languages
+            st.write(matching_games[['name', 'wanted_language', 'other_languages', 'all_reviews']].head(10))  # Display full info with language split
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
