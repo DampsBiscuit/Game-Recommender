@@ -30,7 +30,7 @@ df2 = df1.dropna(subset=['languages', 'name'])
 
 # Clean 'all_reviews' column
 df2['all_reviews'] = df2['all_reviews'].fillna('No reviews')  # Handle missing reviews
-df2['all_reviews'] = df2['all_reviews'].apply(lambda x: re.sub(r'[^\x00-\x7F]+',' ', x))  # Remove special characters
+df2['all_reviews'] = df2['all_reviews'].apply(lambda x: re.sub(r'[^\x00-\x7F]+', ' ', x))  # Remove special characters
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: x if len(x) <= 50 else x[:50] + '...')  # Truncate long reviews
 
 # Ensure all languages in the dataset are lowercase for comparison
@@ -48,25 +48,32 @@ reviews_filter = st.selectbox("Select review category:", ["None", "Mostly Positi
 
 # If the user has entered a language, proceed with the recommendation
 if language:
-    # Filter games that contain the specified language
-    exact_matches = df2[df2['languages'].str.contains(language, na=False)]
-    other_matches = df2[~df2['languages'].str.contains(language, na=False)]
+    # Debugging step 1: Display how many rows match the language
+    st.write(f"Searching for games with the language '{language}'...")
 
-    # Check if a review filter was selected and apply it to both exact and other matches
+    # Filter games that contain the specified language (exact matches)
+    exact_matches = df2[df2['languages'].str.contains(language, na=False)]
+    st.write(f"Exact matches found: {len(exact_matches)}")
+
+    # Filter the remaining games that don't contain the specified language
+    other_matches = df2[~df2['languages'].str.contains(language, na=False)]
+    st.write(f"Other matches found: {len(other_matches)}")
+
+    # Apply review filter if selected
     if reviews_filter != "None":
         exact_matches = exact_matches[exact_matches['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
         other_matches = other_matches[other_matches['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
 
-    # Combine the two sets of results, prioritizing exact language matches
+    # Combine exact matches and other matches
     matching_games = pd.concat([exact_matches, other_matches])
 
-    # Reset index for better readability
+    # Reset index for display
     matching_games = matching_games.reset_index(drop=True)
-    matching_games.index += 1  # Set index to start from 1 for display
+    matching_games.index += 1  # Start index from 1 for display
 
-    # Display results
+    # Display top 20 games
     if not matching_games.empty:
         st.write(f"Games that match your language search: '{language}'")
-        st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))
+        st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display top 20 games
     else:
         st.write(f"No games found for language '{language}' and review filter '{reviews_filter}'.")
