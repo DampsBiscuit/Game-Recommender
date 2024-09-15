@@ -25,8 +25,8 @@ df = pd.read_csv(path, names=column_names, encoding='ISO-8859-1', low_memory=Tru
 # Selecting only relevant columns
 df1 = df[['name', 'languages', 'popular_tags', 'genre', 'original_price', 'all_reviews']]
 
-# Delete missing values
-df2 = pd.DataFrame(df1.dropna())
+# Drop rows with missing values in relevant columns
+df2 = df1.dropna(subset=['languages', 'name'])
 
 # Clean 'all_reviews' column
 df2['all_reviews'] = df2['all_reviews'].fillna('No reviews')  # Handle missing reviews
@@ -56,7 +56,7 @@ if language:
     if reviews_filter != "None":
         exact_matches = exact_matches[exact_matches['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
         other_matches = other_matches[other_matches['all_reviews'].str.contains(reviews_filter, case=False, na=False)]
-    
+
     # Combine the two sets of results, prioritizing exact language matches
     matching_games = pd.concat([exact_matches, other_matches])
 
@@ -66,11 +66,7 @@ if language:
 
     # Display results
     if not matching_games.empty:
-        if reviews_filter == "None":
-            st.write(f"Games that support the language '{language}':")
-            st.table(matching_games[['name']].head(20))  # Display only the name if no review filter
-        else:
-            st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display name, language, and reviews if filter is applied
+        st.write(f"Games that match your language search: '{language}'")
+        st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))
     else:
-        st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
+        st.write(f"No games found for language '{language}' and review filter '{reviews_filter}'.")
