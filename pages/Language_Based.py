@@ -46,7 +46,7 @@ def format_languages(languages, searched_language):
     return ', '.join(formatted)
 
 # Streamlit app
-st.title("🎮Game Recommender with Reviews🎮")
+st.title("🎮Language Based Recommender with Reviews🎮")
 st.write("🔎 Find games based on language and user reviews 🔎")
 
 # Asking for user input via Streamlit for language search
