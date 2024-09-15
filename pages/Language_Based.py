@@ -33,6 +33,13 @@ df2['all_reviews'] = df2['all_reviews'].fillna('No reviews')  # Handle missing r
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: re.sub(r'[^\x00-\x7F]+',' ', x))  # Remove special characters
 df2['all_reviews'] = df2['all_reviews'].apply(lambda x: x if len(x) <= 50 else x[:50] + '...')  # Truncate long reviews
 
+# Add a column to format the languages with spacing
+def format_languages(languages):
+    # Split languages by commas and join them with a newline
+    return '\n'.join([lang.strip() for lang in languages.split(',')])
+
+df2['formatted_languages'] = df2['languages'].apply(format_languages)
+
 # Streamlit app
 st.title("🎮Game Recommender with Reviews🎮")
 st.write("🔎 Find games based on language and user reviews 🔎")
@@ -67,9 +74,9 @@ if language:
         
         if reviews_filter == "All reviews":
             st.write(f"Games that support the language '{language}':")
-            st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display full info if showing all reviews
+            st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(10))  # Display full info if showing all reviews
         else:
             st.write(f"Games that support the language '{language}' with '{reviews_filter}' reviews:")
-            st.table(matching_games[['name', 'languages', 'all_reviews']].head(20))  # Display full info if review filter is applied
+            st.table(matching_games[['name', 'formatted_languages', 'all_reviews']].head(10))  # Display full info if review filter is applied
     else:
         st.write(f"No games found that support the language '{language}' with '{reviews_filter}' reviews.")
